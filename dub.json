@@ -1,0 +1,22 @@
+{
+  "libs-posix":
+  [
+    "dyaml"
+  ],
+	"name": "fixdb",
+	"description": "Database config/rebuild tool",
+	"authors": ["Jason den Dulk"],
+	"license": "BSL-1.0",
+  "platforms": ["posix"],
+  "targetType": "executable",
+  "mainSourceFile": "makefixdb.d",
+
+	"dependencies": {
+   "dyaml" : ""
+	},
+  "lflags-posix": [ "-L/usr/local/lib" ],
+  "postBuildCommands-posix":
+  [
+    "strip makefixdb",
+  ]
+}

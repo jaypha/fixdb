@@ -1,0 +1,83 @@
+#
+# Person database table definition.
+#
+# Copyright (C) 2014 PrimaLinx. All rights reserved.
+#
+# Author: Jason den Dulk
+#
+
+#
+# A person represents a live human. All persons are entities.
+# A person can have the capacity to login to the system and have one or more user roles.
+# A person who cannot log in will have a null username. Otherwise usernames are unique
+#
+
+person:
+  is_a: entity
+
+  columns:
+
+    # Login details
+
+    - { name: username }
+    - { name: password }
+    - { name: roles, type: ulong }
+
+    # Personal details
+    # email is a part of entity definition.
+
+    - { name: first_name }
+    - { name: last_name }
+    - { name: preferred_name }
+    - { name: gender, type: enum, values: [ male, female ], nullable: }
+    - { name: dob, type: date, nullable: }
+    - { name: phone_alt }
+    - { name: email_sig, type: text } # Typically used only by staff.
+
+  indicies:
+
+    username: { unique: }
+    first_name:
+    last_name:
+    preferred_name:
+
+#------------------------------------------------------------------
+
+age:
+  type: function
+  no_sql:
+  returns: int
+  parameters:
+    date: { type: date }
+  body: >
+    declare today date;
+    declare a int;
+    declare d1 int;
+    declare d2 int;
+    set  today = curdate();
+    set d1 = dayofyear(today);
+    set d2 = dayofyear(date);
+    if d1 >= d2 then
+    set a = year(today) - year(date);
+    else
+    set a = year(today) - year(date) - 1;
+    end if;
+    RETURN a;
+
+#------------------------------------------------------------------
+
+which_name:
+  type: function
+  #definer: "CURRENT_USER"
+  no_sql:
+  deterministic:
+  # returns: string
+  parameters:
+    preferred_name:
+    first_name:
+  body: >
+    if preferred_name is null then
+    return first_name;
+    else
+    return preferred_name;
+    end if;

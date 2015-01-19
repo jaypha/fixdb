@@ -1,0 +1,23 @@
+#
+# Entity database table definition.
+#
+# Copyright (C) 2014 PrimaLinx. All rights reserved.
+#
+# Author: Jason den Dulk
+#/
+
+# An entity is a generic person or organisation that is represented in the Primalinx
+# system. All entities are also customers, even if they do not actively purchase anything.
+# This is done for the sake of simplification.
+
+entity: {
+  has_a: [address_delivery, address_billing ],
+
+  columns: [
+    { name: type, type: enum, values: [ person, organisation ] },
+    { name: auto_debit_id },
+    { name: email_contact },
+    { name: email_invoice },
+    { name: phone_main }
+  ]
+}
