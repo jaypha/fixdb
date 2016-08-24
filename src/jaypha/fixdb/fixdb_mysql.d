@@ -8,8 +8,6 @@ import jaypha.fixdb.dbdef;
 
 import jaypha.dbsql.mysql.database;
 
-//import jaypha.fig.value;
-//import jaypha.fig.figparser;
 import jaypha.properties;
 
 public import std.stdio;
@@ -63,6 +61,17 @@ void function(DB db, bool, bool, bool) post_db_make;
 
 //-----------------------------------------------------------------------------
 
+bool isSame(S = string)(S a, S b)
+{
+  if (a is null && b is null)
+    return true;
+  if (a is null || b is null)
+    return false;
+  return (a == b);
+}
+
+//-----------------------------------------------------------------------------
+
 void main(string[] args)
 {
   string fileName;
@@ -83,14 +92,6 @@ void main(string[] args)
 
   strstr settings = extractProperties(cast(string) readText!string(fileName));
 
-/*
-  enforce("database" in figs);
-  enforce(figs["database"].is_list());
-
-  foreach (n,v; figs["database"].get_list())
-    settings[n] = v.get_string();
-*/
-  
   enforce("database.hostname" in settings);
   enforce("database.database" in settings);
   enforce("database.username" in settings);
@@ -414,13 +415,6 @@ string get_alter_table_sql
   //-----------------------------------
   // Columns
 
-  //if (!new_def.no_id && !("id" in old_def.columns))
-  //{
-    // Add id column
-  //  if (!quiet) writeln("  adding id column");
-  //  s ~= ("add column "~id_column_def);
-  //}
-
   // Go through column definitions. Add new columns and alter existing ones if
   // different.
 
@@ -464,7 +458,7 @@ string get_alter_table_sql
 
       if (type != old_cdef.custom_type)
         change = true;
-      if (column_def.default_value != old_cdef.default_value)
+      if (!(isSame(column_def.default_value,old_cdef.default_value)))
         change = true;
       if (column_def.nullable != old_cdef.nullable)
         change = true;
@@ -490,15 +484,7 @@ string get_alter_table_sql
   foreach (column_def; old_def.columns)
   {
     auto name = column_def.name;
-    //if (name == "id")
-    //{
-    //  if (new_def.no_id)
-    //  {
-    //    if (!quiet) writeln("  removing id");
-    //    d ~= ("drop column `id`");
-    //  }
-    //}
-    //else
+
     if (find(names,name).empty) 
     {
       if (!quiet) writeln("  removing "~name);
@@ -506,39 +492,12 @@ string get_alter_table_sql
     }
   }
 
-  /****************************
-   * Indicies
-   */
+  //-----------------------------------
+  // Indicies
 
   bool has_primary = false;
   foreach (name,idx; old_def.indicies)
   {
-    /+
-    if (name == "PRIMARY")
-    {
-      if (!new_def.no_id)
-      {
-        if (idx.columns != ["id"])
-        {
-          if (!quiet) writeln("  drop primary key");
-          d ~= ("drop primary key");
-        }
-        else
-          has_primary = true;
-      }
-      else if
-      (
-        idx.columns != new_def.primary
-      )
-      {
-        if (!quiet) writeln("  drop primary key",idx.columns);
-        d ~= ("drop primary key");
-      }
-      else
-        has_primary = true;
-    }
-    else
-    +/
     if (name != "PRIMARY")
     {
       // Drop index if not in new def.
@@ -563,16 +522,6 @@ string get_alter_table_sql
       if (!quiet) writeln("  add primary key '"~new_def.primary.join("','")~"'");
       s ~= ("add primary key (`"~new_def.primary.join("`,`")~"`)");
     }
-    //if (!new_def.no_id)
-    //{
-    //  if (!quiet) writeln("  add primary key 'id'");
-    //  s ~= ("add primary key (`id`)");
-    //}
-    //else if (old_def.primary != new_def.primary)
-    //{
-    //  if (!quiet) writeln("  add primary key '"~new_def.primary.join("','")~"'");
-    //  s ~= ("add primary key (`"~new_def.primary.join("`,`")~"`)");
-    //}
   }
 
   foreach (name,idx; new_def.indicies)
@@ -680,8 +629,6 @@ TableDef extract_table(string name, DB db)
     column_def.custom_type = row["Type"];
     column_def.nullable = (row["Null"] == "YES");
     column_def.auto_increment = (row["Extra"] == "auto_increment");
-    //if (row["Key"] == "PRI")
-    //  table.primary ~= column_def.name;
     
     table.columns ~= column_def;
   }
